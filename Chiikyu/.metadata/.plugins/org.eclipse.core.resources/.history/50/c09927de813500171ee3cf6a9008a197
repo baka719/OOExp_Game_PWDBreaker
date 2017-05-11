@@ -1,0 +1,185 @@
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Scanner;
+
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+
+public class scoreBoard {
+	private JFrame scoreBoardFrame = new JFrame();
+	private JPanel scoreBoardPanel = new JPanel();
+	private DefaultListModel<String> listModel = new DefaultListModel<String>();
+	private JList<String> scoreList = new JList<String>();
+	private JScrollPane listScrollPane = new JScrollPane(scoreList);
+	private File filePointer = new File("score.dat");
+	private JButton clearDataButton = new JButton("Clear");
+
+	// private FileReader fileReader=new
+	// FileReader("score.dat");---------------------ENDS HERE
+	private class pointNode {
+		int score;
+		String name;
+		Date time = new Date();
+		Calendar date = Calendar.getInstance();
+	}
+	
+	private boolean judge(pointNode a, pointNode b) {
+		if (a.score < b.score)
+			return false;
+		if (a.score == b.score && a.time.compareTo(b.time) > 0)
+			return false;
+		return true;
+	}
+
+	public scoreBoard() throws IOException {
+		if (!filePointer.exists())
+			filePointer.createNewFile();
+	}
+
+	public void showScore() throws IOException {
+		scoreBoardFrame.setVisible(true);
+		int counter = 0;
+		FileReader fileReader = new FileReader(filePointer.getName());
+		Scanner scan = new Scanner(fileReader);
+		ArrayList<pointNode> scoreList = new ArrayList<pointNode>();
+		while (scan.hasNext()) {
+			pointNode temp = new pointNode();
+
+			temp.score = scan.nextInt();
+			temp.name = scan.next();
+			// SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+			long tmp = scan.nextLong();
+			temp.time.setTime(tmp);
+			temp.date.setTime(temp.time);
+			scoreList.add(temp);
+			++counter;
+		}
+		scan.close();
+		clearData(false);
+		filePointer.createNewFile();
+		FileWriter fileWritter = new FileWriter(filePointer.getName(), true);
+		BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+		for (int i = 0; i < counter; ++i)
+			for (int j = 1; j < counter; ++j)
+				if (judge(scoreList.get(j - 1), scoreList.get(j))) {
+					pointNode temp = scoreList.get(j);
+					scoreList.set(j, scoreList.get(j - 1));
+					scoreList.set(j - 1, temp);
+				}
+		for (int i = 0; i < Math.min(10, counter); ++i) {
+			bufferWritter.write(scoreList.get(i).score + " " + scoreList.get(i).name + "\r\n");
+			String tempDate = new String();
+			tempDate = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(scoreList.get(i).date.getTime());
+			tempDate = (i + 1) + "   " + tempDate + "   " + scoreList.get(i).score + "   " + scoreList.get(i).name;
+			System.out.println(tempDate);
+			// tempDate=(new SimpleDateFormat("yyyy-MM-dd
+			// HH:mm:ss")).format(scoreList.get(i).date.toString());
+			listModel.addElement(tempDate);
+		}
+		bufferWritter.close();
+	}
+
+	public void addScore(long score, String name, Date time) throws IOException {
+		if (!filePointer.exists())
+			filePointer.createNewFile();
+		FileWriter fileWritter = new FileWriter(filePointer.getName(), true);
+		BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+		bufferWritter.write(score + " " + name + " " + (long) time.getTime() + "\r\n");
+		bufferWritter.close();
+	}
+
+	public boolean clearData(boolean showInfo) throws IOException {
+		if (showInfo) {
+			if (JOptionPane.showConfirmDialog(null, "Are you sure you want to clear the score board?", "Info",
+					JOptionPane.YES_NO_OPTION) == 0) {
+				if (filePointer.delete()) {
+					JOptionPane.showMessageDialog(null, "Success!", "Info", JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, "Failed.", "Info", JOptionPane.WARNING_MESSAGE);
+					return false;
+				}
+			} else
+				return false;
+		} else {
+			if (!filePointer.delete()) {
+				JOptionPane.showMessageDialog(null, "Failed clearing data.", "Info", JOptionPane.WARNING_MESSAGE);
+				return false;
+			} else
+				return true;
+		}
+	}
+
+	public void setSize() {
+		listScrollPane.setPreferredSize(new Dimension(250, 220));
+		scoreList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		scoreList.setModel(listModel);
+		// listModel.addElement("1 100 Chiikyu");
+	}
+
+	public void setPanel() {
+		scoreBoardPanel.setBackground(new Color(240, 240, 240));
+		scoreBoardPanel.setPreferredSize(new Dimension(270, 270));
+		scoreBoardPanel.add(listScrollPane);
+		scoreBoardPanel.add(clearDataButton);
+	}
+
+	public void setFrame() {
+		scoreBoardFrame.setTitle("Scoreboard");
+		// scoreBoardFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		scoreBoardFrame.getContentPane().add(scoreBoardPanel);
+		scoreBoardFrame.pack();
+		scoreBoardFrame.setVisible(false);
+		scoreBoardFrame.setLocationRelativeTo(null);
+	}
+
+	public void setScore() {
+		if (!filePointer.exists())
+			filePointer.mkdir();
+
+	}
+
+	public void set() throws IOException {
+		setSize();
+		setPanel();
+		setFrame();
+		clearDataButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					clearData(true);
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
+		/*
+		 * clearData(false); Date date=new Date(); addScore(20,"Chiikyu",date);
+		 * addScore(30,"Chiikyu",date); addScore(40,"Chiikyu",date);
+		 * addScore(20,"Chiikyu",date); addScore(40,"Chiikyu",date);
+		 * addScore(30,"Chiikyu",date); addScore(40,"Chiikyu",date);
+		 * addScore(30,"Chiikyu",date); addScore(40,"Chiikyu",date);
+		 * addScore(50,"Chiikyu",date); addScore(40,"Chiikyu",date);
+		 * showScore();
+		 */
+	}
+
+}

@@ -1,0 +1,86 @@
+import java.util.Random;
+
+import javax.swing.JOptionPane;
+
+public class gameEvents {
+	private int randomNumber;
+	private String stringNumber;
+	private Random random = new Random();
+	private int resultReturnValue = 0;
+	private StringBuilder strBuilder;
+	private int attemptsCount = 0;
+	private boolean winFlag = false;
+
+	public gameEvents() {
+		generateRandomNumber();
+	}
+
+	public void generateRandomNumber() {
+		winFlag = false;
+		long t = System.currentTimeMillis();
+		random = new Random(t);
+		randomNumber = random.nextInt(10000);
+		stringNumber = String.valueOf(randomNumber);
+		System.out.println(random);
+	}
+
+	public boolean getWinFlag() {
+		return winFlag;
+	}
+
+	public void calculateRandomNumber(String s) {
+		String tmp = new String(stringNumber);
+		String tmp2 = new String(s);
+		resultReturnValue = 0;
+		for (int i = 0; i < 4; ++i)
+			if (tmp.charAt(i) == tmp2.charAt(i)) {
+				resultReturnValue += 10;
+				strBuilder = new StringBuilder(tmp);
+				strBuilder.setCharAt(i, '*');
+				tmp = strBuilder.toString();
+
+				strBuilder = new StringBuilder(tmp2);
+				strBuilder.setCharAt(i, '#');
+				tmp2 = strBuilder.toString();
+			}
+		for (int i = 0; i < 4; ++i)
+			for (int j = 0; j < 4; ++j)
+				if (tmp.charAt(i) == s.charAt(j)) {
+					resultReturnValue += 1;
+					strBuilder = new StringBuilder(tmp);
+					strBuilder.setCharAt(i, '*');
+					tmp = strBuilder.toString();
+
+					strBuilder = new StringBuilder(tmp2);
+					strBuilder.setCharAt(j, '#');
+					tmp2 = strBuilder.toString();
+				}
+		// return resultReturnValue;
+	}
+
+	public boolean judge(String s) {
+		if (s.length() != 4)
+			return false;
+		for (int i = 0; i < 4; ++i)
+			if (s.charAt(i) > '9' || s.charAt(i) < '0')
+				return false;
+		return true;
+	}
+
+	public String getNumber(String s) {
+		if (judge(s)) {
+			calculateRandomNumber(s);
+			if (resultReturnValue < 40) {
+				attemptsCount++;
+				winFlag = true;
+				// listModel.addElement("0:0000|0A0B");
+				return attemptsCount + ":" + s + "|" + resultReturnValue / 10 + "A" + resultReturnValue % 10 + "B";
+			} else {
+				return attemptsCount + ":" + s + "|" + resultReturnValue / 10 + "A" + resultReturnValue % 10 + "B";
+			}
+		} else {
+			JOptionPane.showMessageDialog(null, "Wrong format.", "Info", JOptionPane.WARNING_MESSAGE);
+			return "";
+		}
+	}
+}

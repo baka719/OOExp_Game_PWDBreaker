@@ -1,0 +1,232 @@
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.util.Date;
+
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.ListSelectionModel;
+
+public class Windows {
+	private JFrame winFrame = new JFrame();
+	private JPanel panel = new JPanel();
+	private JLabel inputLabel = new JLabel("Input Number(0000 - 9999)");
+	private JTextArea inputText = new JTextArea();
+	private JButton submitButton = new JButton("Submit");
+	private DefaultListModel<String> listModel = new DefaultListModel<String>();
+	private JList<String> resultList = new JList<String>();
+	private JScrollPane listScrollPane = new JScrollPane(resultList);
+	private JMenuBar menuBar = new JMenuBar();
+	private JMenu gameMenu = new JMenu("Game");
+	private JMenu helpMenu = new JMenu("Help");
+	private JMenuItem newGameItem = new JMenuItem("New game");
+	private JMenuItem scoreBoardItem = new JMenuItem("Scoreboard");
+	private JMenuItem explosionItem = new JMenuItem("Explosion");
+	private JMenuItem helpItem = new JMenuItem("Help");
+	private scoreBoard board;
+	private gameEvents Game = new gameEvents();
+
+	private void setSize() {
+		inputLabel.setPreferredSize(new Dimension(190, 20));
+		inputText.setPreferredSize(new Dimension(50, 20));
+		submitButton.setPreferredSize(new Dimension(80, 20));
+		// resultList.setPreferredSize(new Dimension(330,80));
+		listScrollPane.setPreferredSize(new Dimension(330, 80));
+		resultList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		resultList.setModel(listModel);
+		winFrame.setResizable(false);
+		// listModel.addElement("0:0000|0A0B");
+	}
+
+	private void setMenu() {
+		/* Set MenuBar */
+		gameMenu.add(newGameItem);
+		gameMenu.add(scoreBoardItem);
+		gameMenu.addSeparator();
+		gameMenu.add(explosionItem);
+		helpMenu.add(helpItem);
+		menuBar.add(gameMenu);
+		menuBar.add(helpMenu);
+	}
+
+	private void setPanel() {
+		panel.setBackground(new Color(240, 240, 240));
+		panel.setPreferredSize(new Dimension(400, 150));
+		panel.add(inputLabel);
+		panel.add(inputText);
+		panel.add(submitButton);
+		// panel.add(resultList);
+		// listScrollPane.add(resultList);
+		panel.add(listScrollPane);
+	}
+
+	private void setFrame() {
+		winFrame.setTitle("Password Breaker");
+		winFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		winFrame.setJMenuBar(menuBar);
+		winFrame.getContentPane().add(panel);
+		winFrame.pack();
+		winFrame.setVisible(true);
+		winFrame.setLocationRelativeTo(null);
+		inputText.requestFocus();
+
+	}
+
+	private void setListener() {
+		newGameItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				boolean flag = true;
+				if (!Game.getWinFlag()) {
+					if (JOptionPane.showConfirmDialog(null,
+							"Are you sure you want to start a new game?",
+							"Info", JOptionPane.YES_NO_OPTION) == 1) {
+						flag = false;
+					}
+				}
+				if (flag) {
+					Game.cleanData();
+					resetAll();
+				}
+			}
+		});
+		scoreBoardItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					board.showScore();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
+		explosionItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				boolean flag = true;
+				if (!Game.getWinFlag()) {
+					if (JOptionPane
+							.showConfirmDialog(
+									null,
+									"Are you sure you want to exit?\nYour game status will NOT be saved!",
+									"Info", JOptionPane.YES_NO_OPTION) == 1) {
+						flag = false;
+					}
+				}
+				if (flag)
+					System.exit(0);
+			}
+		});
+		helpItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String temp = "Enter a 4-digit number (0000-9999) and click \"Submit\" to check number.\n";
+				temp = temp.concat("Then you'll get a result like \"1A2B\" \n");
+				temp = temp
+						.concat("\"1A\" means 1 digit of your submit is correct.\n");
+				temp = temp
+						.concat("\"2B\" means 2 digit of your submit is not correct, \n");
+				temp = temp
+						.concat("but have same digits in another position.\n");
+				temp = temp.concat("Eg. Submit:1320 Answer:1234 Result:1A2B\n");
+				temp = temp
+						.concat("To get a \"4A0B\" in less attempts and less time-spending is your target.\nHave fun!");
+				// System.out.println(temp);
+				JOptionPane.showMessageDialog(null, temp, "Help",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
+		});
+		submitButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!Game.getWinFlag()) {
+					String temp = inputText.getText();
+					String res = Game.getNumberResult(temp);
+					if (!res.equals("")) {
+						listModel.add(0, res);
+						if (Game.getWinFlag()) {
+							int attempts = Game.getAttempts();
+							long time = Game.getTime();
+							long point = Game.getScore();
+							inputText.setEditable(false);
+							submitButton.setEnabled(false);
+							String name = JOptionPane
+									.showInputDialog(
+											null,
+											"CORRECT!\nAttempts:"
+													+ attempts
+													+ "\nTime:"
+													+ time
+													+ "s\n\nScore:"
+													+ point
+													+ "\n\nEnter your honorable name here:\n(Cancel/Leave blank:Not record this score)",
+											"Congratulation",
+											JOptionPane.INFORMATION_MESSAGE);
+							listModel.add(0,
+									"\"Game=>New game\" to start new game.");
+							listModel.add(0, "-Stage Clear!-");
+							if (name == null || name.equals(""))
+								return;
+							// System.out.println(name);
+							Date date = new Date();
+							try {
+								board.addScore(point, name, date);
+								board.showScore();
+							} catch (IOException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+						} else {
+							inputText.setText("");
+							inputText.requestFocus();
+						}
+						// inputText.requestFocus();
+					} else {
+						listModel.add(0, "Invalid input:\"" + temp + "\"");
+						inputText.setText("");
+						inputText.requestFocus();
+						JOptionPane.showMessageDialog(null,
+								"Format incorrect.", "Info",
+								JOptionPane.WARNING_MESSAGE);
+					}
+
+				} else
+					JOptionPane.showMessageDialog(null,
+							"You have won.\nPlease start a new game.", "Help",
+							JOptionPane.INFORMATION_MESSAGE);
+			}
+		});
+	}
+
+	private void resetAll() {
+		inputText.setText("");
+		listModel.clear();
+		inputText.requestFocus();
+		inputText.setEditable(true);
+		submitButton.setEnabled(true);
+
+	}
+	public Windows() throws IOException{
+		setSize();
+		setMenu();
+		setPanel();
+		setFrame();
+		setListener();
+
+		board = new scoreBoard();
+		
+	}
+}
